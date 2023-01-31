@@ -1,0 +1,388 @@
+---
+title: "cleaning_inv"
+output: html_document
+date: "2023-01-29"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Load libraries
+```{r}
+library(tidyverse)
+library(janitor)
+library(tidycensus)
+library(sf)
+library(ggplot2)
+
+```
+
+
+#Load data
+```{r}
+
+bridges <- read_csv("inventory.csv")
+data(fips_codes)
+
+#create state lookup df
+fips_states <- fips_codes%>%
+  select(state_code, state_name)
+
+#create county lookup df
+fips_counties <- fips_codes%>%
+  select(county, county_code)
+
+
+service <- read_csv("service.csv")
+
+service_type <- read_csv("service_type.csv")
+
+owner <- read_csv("owner.csv")
+
+```
+
+#Clean data
+#src = https://www.fhwa.dot.gov/bridge/mtguide.pdf
+   
+#Select columns, transform state codes to state names
+```{r}
+
+#colnames(bridges)
+library(tigris)
+
+bridges_clean <- bridges %>%
+  select(STATE_CODE_001, COUNTY_CODE_003, OWNER_022, ROUTE_PREFIX_005B, SERVICE_LEVEL_005C, ROUTE_NUMBER_005D, FEATURES_DESC_006A, FACILITY_CARRIED_007, LOCATION_009, TOLL_020, MAINTENANCE_021, YEAR_BUILT_027, TRAFFIC_LANES_ON_028A, ADT_029, SERVICE_ON_042A)
+  #filter(OWNER_022 == "01")
+
+bridges_clean <- clean_names(bridges_clean)%>%
+        rename("state_code" = "state_code_001",
+               "county_code" = "county_code_003")%>%
+  mutate(full_code = paste(state_code,county_code))
+  
+bridges_clean$full_code <- str_replace_all(bridges_clean$full_code, " ", "")
+
+#bridges_clean$long_017 <- as.double(as.character(bridges_clean$long_017))
+
+
+bridges_clean <- transform(
+  bridges_clean,
+  state_code = replace(
+    state_code,
+    state_code %in% fips_states$state_code,
+    setNames(fips_states$state_name, fips_states$state_code)[state_code][state_code %in% fips_states$state_code]
+  )
+)
+
+fips_clean <- fips_codes%>%
+  mutate(full_code = paste(state_code,county_code))%>%
+  select(county, full_code)
+  
+fips_clean$full_code <- str_replace_all(fips_clean$full_code, " ", "")
+
+
+bridges_clean <- transform(
+  bridges_clean,
+  full_code = replace(
+    full_code,
+    full_code %in% fips_clean$full_code,
+    setNames(fips_clean$county, fips_clean$full_code)[full_code][full_code %in% fips_clean$full_code]
+  )
+)
+
+###
+bridges_clean <- transform(
+  bridges_clean,
+  service_level_005c = replace(
+    service_level_005c,
+    service_level_005c %in% service$service_level_005c,
+    setNames(service$desc, service$service_level_005c)[service_level_005c][service_level_005c %in% service$service_level_005c]
+  )
+)
+
+bridges_clean <- transform(
+  bridges_clean,
+  owner_022 = replace(
+    owner_022,
+    owner_022 %in% owner$owner_022,
+    setNames(owner$desc, owner$owner_022)[owner_022][owner_022 %in% owner$owner_022]
+  )
+)
+
+bridges_clean <- transform(
+  bridges_clean,
+  service_on_042a = replace(
+     service_on_042a,
+     service_on_042a %in% service_type$service_on_042a,
+    setNames(service_type$desc, service_type$service_on_042a)[service_on_042a][service_on_042a %in% service_type$service_on_042a]
+  )
+)
+
+
+
+
+```
+
+
+
+
+```{r}
+
+head(bridges_clean)
+
+bridges_selects <- bridges_clean%>%
+  select(state_code, full_code, owner_022, service_on_042a, year_built_027, facility_carried_007, location_009)
+
+bridges_selects$facility_carried_007 <- str_replace_all(bridges_selects$facility_carried_007, "'", "")
+
+bridges_selects$location_009 <- str_replace_all(bridges_selects$location_009, "'", "")
+
+bridges_selects <- bridges_selects%>%
+        rename("State" = "state_code",
+               "County" = "full_code",
+               "Owner" = "owner_022",
+               "Service Type" = "service_on_042a",
+               "Year Built" = "year_built_027",
+               "Facility Carried" = "facility_carried_007",
+               "Location" = "location_009"
+               )
+
+head(bridges_selects)
+
+```
+
+```{r}
+
+write.csv(bridges_selects, "bridges_cleaned.csv", row.names=FALSE)
+
+
+```
+
+
+
+### END ####
+
+
+
+
+######Access lat/long
+
+```{r}
+
+
+1e7
+
+bridges_cleaner <- bridges_clean %>%
+  mutate(lat = lat_016/1e7)%>%
+  mutate(long = long_017/1e7)
+
+
+frm <- frm %>% 
+   mutate(dogs = cats / 1000)
+
+my_sf <- st_as_sf(bridges_clean, coords = c('long_017', 'lat_016'))
+
+md_shp <- st_read("https://raw.githubusercontent.com/frankrowe/maryland-geojson/master/maryland.geojson")
+
+md <- bridges_clean %>%
+  filter(state_code == "Maryland")
+
+md_sf <- st_as_sf(md, coords = c('long_017', 'lat_016'))
+
+md_map_all <- 
+  leaflet()%>%
+  addProviderTiles(providers$CartoDB.Positron)%>%
+  addPolylines(
+    data=md_shp,
+    weight=2,
+    color="gray"
+  )%>%
+ addCircleMarkers(
+    data=md_sf,
+    color="orange",
+    radius=2)
+
+md_map_all
+
+#plot
+
+ggplot(my_sf) + 
+  geom_sf()
+
+```
+
+
+----
+  
+  
+  
+library(maps)
+library(sf)
+
+## Get the states map, turn into sf object
+US <- st_as_sf(map("state", plot = FALSE, fill = TRUE))
+
+## Test the function using points in Wisconsin and Oregon
+testPoints <- data.frame(x = c(-90, -120), y = c(44, 44))
+
+# Make it a spatial dataframe, using the same coordinate system as the US spatial dataframe
+testPoints <- st_as_sf(bridges_clean, coords = c("lat_016", "long_017"), crs = st_crs(US))
+
+#.. and perform a spatial join!
+st_join(testPoints, US)
+
+
+
+----
+  
+  
+  
+  
+library(maps)
+
+startm <- Sys.time()
+#I am doing the reverse geocoding using the function map.where from the maps package.
+#Here I used three maps of the package; world, state and county
+country<-map.where(database="world", 
+                           usafire$longitude, usafire$latitude)
+state<-map.where(database="state", 
+                         usafire$longitude, usafire$latitude)
+county<-map.where(database="county", 
+                        bridges_clean$long_017, bridges_clean$lat_016)
+endm <- Sys.time()
+
+
+         ID        geometry
+1 wisconsin  POINT (-90 44)
+2    oregon POINT (-120 44)
+
+library(tidygeocoder)
+reverse <- bridges_clean %>%
+  reverse_geocode(lat = "lat_016", long = "long_017")
+
+rev1 <- bridges_clean %>%
+  reverse_geocode(lat = "lat_016", long = "long_017", address = addr, method = "osm")
+
+```
+
+
+
+  my_sf <- st_set_crs(my_sf, crs = 4326)
+
+vehicle_points <- st_as_sf(bridges_clean, 
+                          coords = c("long_017", "lat_016"), 
+                          crs = 4326, 
+                          agr = "constant")
+
+filter() statement with the is.na()
+
+my_sf <- st_set_crs(bridges_clean, crs = 4326)
+
+#Plot it:
+
+ggplot(my_sf) + 
+  geom_sf(aes(color = cluster))
+
+
+
+```
+
+
+
+```{r}
+
+
+library(tidygeocoder)
+reverse <- bridges_clean %>%
+  reverse_geocode(lat = lat_016, long = long_017, method = 'osm',
+                  address = address_found, full_results = TRUE)
+
+
+bridges_clean %>% lookup_code(county_code)
+
+
+bridges_clean <- transform(
+bridges_clean,
+ county_code = replace(
+    county_code,
+    county_code %in% fips_counties$county_code,
+    setNames(fips_counties$county, fips_counties$county_code)[county_code][county_code %in% fips_counties$county_code]
+  )
+)
+
+library(latlong2)
+testPoints <- data.frame(x=c(-90, -120), y=c(44, 44), z=c("a", "b"))
+latlong2(testPoints, to="state")
+
+bridges_clean <- transform(
+  bridges_clean,
+ county_code = replace(
+    county_code,
+    county_code %in% fips_counties$county_code,
+    setNames(fips_counties$county, fips_counties$county_code)[county_code][county_code %in% fips_counties$county_code]
+  )
+)
+
+
+
+bridges_clean
+
+library(data.table)
+
+dt.replaceValueUsingLookup <- function(dt, col, dtLookup) {
+   dt[
+     dtLookup,
+     on = setNames("old", col),
+     (col) := new
+      ]
+     }
+
+bridges_clean %>% 
+   dt.replaceValueUsingLookup("state_code", fips_states)
+bridges_clean
+
+bridges_clean %>%
+   gather(key = "state_code") %>%
+   left_join(fips_states, by = "state_code") %>%
+   spread(key = state_code, value = state_name)
+
+
+bridges_clean %>%
+  left_join(fips_states, by = 'state_code') %>%
+  transmute(state_code = coalesce(state_name, state_code))
+bridges_clean
+
+inds <- match(bridges_clean$state_code, fips_states$state_code)
+bridges_clean$state_code[!is.na(inds)] <- fips_states$state_code[na.omit(inds)]
+bridges_clean
+
+
+bridges_clean <- inner_join(bridges_clean, fips_states, by = c("STATE_CODE_001" = "state_code"))
+bridges_clean <- inner_join(bridges_clean, fips_counties, by = c("COUNTY_CODE_003" = "county_code"))
+
+
+
+
+
+```
+```{r}
+library(tidyverse)
+library(sf)
+library(mapview)
+mapview(bridges_clean, xcol = "long_017", ycol = "lat_016", crs = 4269, grid = FALSE)
+sbux_sf <- st_as_sf(bridges_clean, coords = c("long_017", "lat_016"),  crs = 4326)
+
+
+```
+
+
+bridges_clean <- clean_names(bridges)%>%
+  
+  
+bridges_clean <- inner_join(bridges, fips_states, by = c("STATE_CODE_001" = "state_code"))
+
+head(bridges_clean)
+
+
+
+```

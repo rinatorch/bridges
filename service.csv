@@ -1,0 +1,9 @@
+service_level_005c,desc
+0,None of the below
+1,Mainline
+2,Alternate
+3,Bypass
+4,Spur
+6,Business
+7,"Ramp, Wye, Connector, etc."
+8,Service and/or unclassified frontage road
