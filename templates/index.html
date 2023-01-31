@@ -3,5 +3,27 @@
     <head></head>
     <body>
         <h1>Bridge Inventory</h1>
+        <table border="1" cellpadding="7">
+            <tr>
+        <th>State</th>
+        <th>County</th>
+        <th>Owner</th>
+        <th>Service Type</th>
+        <th>Year Built</th>
+        <th>Facility Carried</th>
+        <th>Location</th>
+            </tr>
+        {% for obj in object_list %}
+        <tr>
+            <td>{{ obj.State }}</td>
+            <td>{{ obj.County }}</td>
+            <td>{{ obj.Owner }}</td>
+            <td>{{ obj.Service_Type }}</td>
+            <td>{{ obj.Year_Built }}</td>
+            <td>{{ obj.Facility_Carried }}</td>
+            <td>{{ obj.Location }}</td>
+        </tr>
+        {% endfor %}
+    </table>
     </body>
 </html>
