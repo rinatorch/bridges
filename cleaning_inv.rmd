@@ -149,6 +149,9 @@ bridges_selects <- bridges_selects%>%
 
 head(bridges_selects)
 
+bridges_states <- bridges_selects%>%
+  filter(`Service Type` == "Pedestrian-bicycle")
+
 ```
 
 ```{r}
