@@ -1,4 +1,4 @@
-This database is constructed based on the U.S. Bridge Inventory.
+#This database is constructed based on the U.S. Bridge Inventory.
 
 To explore the data, select bridges_cleaned below.
 
