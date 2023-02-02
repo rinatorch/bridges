@@ -7,7 +7,7 @@ The bridge inventory dataset is massive. In order for the database to be useful 
 
 Datasette allows for ease of information-sharing and fact checking because the results of a search can be shared in a URL. This makes it easy to share the details of a given bridge or type of bridge. For example, users could share a result set of [all bridges owned by the army](https://bridge-inventory.glitch.me/data/bridges_cleaned?_sort=rowid&Owner__exact=Army) or the details of a specific [Maryland bridge built in 1809](https://bridge-inventory.glitch.me/data/bridges_cleaned?_sort=rowid&Year_Built__exact=1809&State__exact=Maryland) — the oldest one in the state.
 
-I used [Glitch] to run this Datasette app. This strategy worked, but both Datasette and Glitch seem a bit overwhelmed by the size of this database.
+I used [Glitch](https://simonwillison.net/2019/Apr/23/datasette-glitch/) to run this Datasette app. This strategy worked, but both Datasette and Glitch seem a bit overwhelmed by the size of this database.
 
 ## The Flask app
 
