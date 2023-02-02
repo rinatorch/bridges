@@ -19,7 +19,7 @@ library(ggplot2)
 ```
 
 
-#Load data
+#Load data and bring in lookup tables
 ```{r}
 
 bridges <- read_csv("inventory.csv")
@@ -46,7 +46,8 @@ cond <- read_csv("condition.csv")
 #Clean data
 #src = https://www.fhwa.dot.gov/bridge/mtguide.pdf
    
-#Select columns, transform state codes to state names
+#Select columns, transform state codes to state names, county codes to county name
+#Use a Base R technique to decode coded values
 ```{r}
 
 colnames(bridges)
@@ -91,7 +92,6 @@ bridges_clean <- transform(
   )
 )
 
-###
 bridges_clean <- transform(
   bridges_clean,
   service_level_005c = replace(
@@ -152,10 +152,10 @@ bridges_clean <- transform(
 
 
 
-
+#Zero in on specific columns, clean up for a front end viewer
 ```{r}
 
-head(bridges_clean)
+#head(bridges_clean)
 
 bridges_selects <- bridges_clean%>%
   select(state_code, full_code, owner_022, service_on_042a, year_built_027, facility_carried_007, location_009, deck_cond_058, superstructure_cond_059, substructure_cond_060)
@@ -193,6 +193,7 @@ head(bridges_ex)
 
 ```
 
+#Write out the bridges dataset to a csv
 ```{r}
 
 write.csv(bridges_ex, "clean_bridges.csv", row.names=FALSE)
@@ -201,8 +202,7 @@ write.csv(bridges_ex, "clean_bridges.csv", row.names=FALSE)
 ```
 
 
-#Get bad bridges
-
+#Filter to bad bridges that are imminently failing in at least one of the three categories: deck, substructure and superstructure
 ```{r}
 
 bad <- bridges_selects %>%
