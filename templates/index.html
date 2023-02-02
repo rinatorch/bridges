@@ -1,55 +1,76 @@
 <!doctype html>
 <html lang="en">
     <head>
-        <!--table css-->
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.2.0/css/bootstrap.min.css">
-        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.1/css/dataTables.bootstrap5.min.css">
-        <!---general css-->
-       <!--- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous"> -->           
-       
-        <!--table script-->
-        <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
-        <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-        <script src="https://cdn.datatables.net/1.13.1/js/dataTables.bootstrap5.min.js"></script>
-
-        <script>
-          $(document).ready(function () {
-    $('#example').DataTable({
-        paging: false,
-        ordering: false,
-        info: false,
-    });
-});
-             </script>
+       <title>Bridge Inventory</title>
+        <link rel="stylesheet" href="../static/style.css" />
+<!--for table-->
+        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+<!--for fonts-->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=League+Gothic&family=Roboto+Slab:wght@500&family=Roboto:wght@100;700&display=swap" rel="stylesheet">
+        
     </head>
     <body>
-        <h1>Bridge Inventory</h1>
-        <table id="example" class="table table-striped" style="width:100%">
+        <header>
+            <h1>More than 400 American bridges are failing.</h1>
+            <div class="text">
+           
+            <p>An analysis of the 2022 National Bridge Inventory shows 410 bridges are structurally failing. The analysis includes all bridges that have been classified by the inventory as imminently failing in the deck, substructure and superstructure. The substructure includes bridge elements below the bridge's deck, including piers and abutments. The superstructure includes elements above the deck.</p>
+            
+            <p>Explore the table below to search the failing bridges.</p>
+        
+        </div>
+    
+        </header>
+        <table border=1 cellpadding=5 id="data" class="table table-striped">
             <thead>
             <tr>
-        <th>State</th>
-        <th>County</th>
-        <th>Owner</th>
-        <th>Service Type</th>
-        <th>Year Built</th>
-        <th>Facility Carried</th>
-        <th>Location</th>
+                <th>State</th>
+                <th>County</th>
+                <th>Owner</th>
+                <th>Year Built</th>
+                <th>Service Type</th>
+                <th>Facility Carried</th>
+                <th>Location</th>
+                <th>Deck Condition</th>
+                <th>Superstructure Condition</th>
+                <th>Substructure Condition</th>
+               
             </tr>
         </thead>
         <tbody>
         {% for obj in object_list %}
-        <tr>
-            <td>{{ obj.State }}</td>
-            <td>{{ obj.County }}</td>
-            <td>{{ obj.Owner }}</td>
-            <td>{{ obj.Service_Type }}</td>
-            <td>{{ obj.Year_Built }}</td>
-            <td>{{ obj.Facility_Carried }}</td>
-            <td>{{ obj.Location }}</td>
-        </tr>
-    
+            <tr>
+                <td>{{ obj.state_code }}</td>
+                <td>{{ obj.full_code }}</td>
+                <td>{{ obj.owner_022 }}</td>
+                <td>{{ obj.year_built_027 }}</td>
+                <td>{{ obj.service_on_042a }}</td>
+                <td>{{ obj.facility_carried_007 }}</td>
+                <td>{{ obj.location_009 }}</td>
+                <td>{{ obj.deck_cond_058 }}</td>
+                <td>{{ obj.superstructure_cond_059 }}</td>
+                <td>{{ obj.substructure_cond_060 }}</td>               
+                
+            </tr>
         {% endfor %}
     </tbody>
-    </table>
+        </table>
+        <script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+        <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+        
+      
+        <script>
+            $(document).ready(function () {
+                $('#data').DataTable({
+                    "pagingType": "simple_numbers",
+                    "lengthChange": false,
+        
+                });
+            });
+        </script>
+
     </body>
 </html>

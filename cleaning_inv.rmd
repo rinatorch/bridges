@@ -40,6 +40,7 @@ service_type <- read_csv("service_type.csv")
 
 owner <- read_csv("owner.csv")
 
+cond <- read_csv("condition.csv")
 ```
 
 #Clean data
@@ -48,11 +49,11 @@ owner <- read_csv("owner.csv")
 #Select columns, transform state codes to state names
 ```{r}
 
-#colnames(bridges)
+colnames(bridges)
 library(tigris)
 
 bridges_clean <- bridges %>%
-  select(STATE_CODE_001, COUNTY_CODE_003, OWNER_022, ROUTE_PREFIX_005B, SERVICE_LEVEL_005C, ROUTE_NUMBER_005D, FEATURES_DESC_006A, FACILITY_CARRIED_007, LOCATION_009, TOLL_020, MAINTENANCE_021, YEAR_BUILT_027, TRAFFIC_LANES_ON_028A, ADT_029, SERVICE_ON_042A)
+  select(STATE_CODE_001, COUNTY_CODE_003, OWNER_022, ROUTE_PREFIX_005B, SERVICE_LEVEL_005C, ROUTE_NUMBER_005D, FEATURES_DESC_006A, FACILITY_CARRIED_007, LOCATION_009, TOLL_020, MAINTENANCE_021, YEAR_BUILT_027, TRAFFIC_LANES_ON_028A, ADT_029, SERVICE_ON_042A, DECK_COND_058, SUPERSTRUCTURE_COND_059, SUBSTRUCTURE_COND_060)
   #filter(OWNER_022 == "01")
 
 bridges_clean <- clean_names(bridges_clean)%>%
@@ -118,6 +119,32 @@ bridges_clean <- transform(
   )
 )
 
+bridges_clean <- transform(
+  bridges_clean,
+  deck_cond_058 = replace(
+     deck_cond_058,
+     deck_cond_058 %in% cond$code,
+    setNames(cond$desc, cond$code)[deck_cond_058][deck_cond_058 %in% cond$code]
+  )
+)
+
+bridges_clean <- transform(
+  bridges_clean,
+  superstructure_cond_059 = replace(
+     superstructure_cond_059,
+     superstructure_cond_059 %in% cond$code,
+    setNames(cond$desc, cond$code)[superstructure_cond_059][superstructure_cond_059 %in% cond$code]
+  )
+)
+
+bridges_clean <- transform(
+  bridges_clean,
+  substructure_cond_060 = replace(
+     substructure_cond_060,
+     substructure_cond_060 %in% cond$code,
+    setNames(cond$desc, cond$code)[substructure_cond_060][substructure_cond_060 %in% cond$code]
+  )
+)
 
 
 
@@ -131,35 +158,60 @@ bridges_clean <- transform(
 head(bridges_clean)
 
 bridges_selects <- bridges_clean%>%
-  select(state_code, full_code, owner_022, service_on_042a, year_built_027, facility_carried_007, location_009)
+  select(state_code, full_code, owner_022, service_on_042a, year_built_027, facility_carried_007, location_009, deck_cond_058, superstructure_cond_059, substructure_cond_060)
 
 bridges_selects$facility_carried_007 <- str_replace_all(bridges_selects$facility_carried_007, "'", "")
 
 bridges_selects$location_009 <- str_replace_all(bridges_selects$location_009, "'", "")
 
-bridges_selects <- bridges_selects%>%
+
+bridges_ex <- bridges_selects%>%
         rename("State" = "state_code",
                "County" = "full_code",
                "Owner" = "owner_022",
                "Service Type" = "service_on_042a",
                "Year Built" = "year_built_027",
                "Facility Carried" = "facility_carried_007",
-               "Location" = "location_009"
+               "Location" = "location_009",
+               "Deck Condition" = "deck_cond_058",
+               "Superstructure Condition" = "superstructure_cond_059",
+               "Substructure Condition" = "substructure_cond_060"
                )
 
-head(bridges_selects)
+bridges_ex$`Deck Condition` = str_to_title(bridges_ex$`Deck Condition`)
 
-bridges_states <- bridges_selects%>%
-  filter(`Service Type` == "Pedestrian-bicycle")
+bridges_ex$`Location` = str_to_title(bridges_ex$`Location`)
+
+bridges_ex$`Facility Carried` = str_to_title(bridges_ex$`Facility Carried`)
+
+bridges_ex$`Superstructure Condition` = str_to_title(bridges_ex$`Superstructure Condition`)
+
+bridges_ex$`Substructure Condition` = str_to_title(bridges_ex$`Substructure Condition`)
+
+head(bridges_ex)
+
 
 ```
 
 ```{r}
 
-write.csv(bridges_selects, "bridges_cleaned.csv", row.names=FALSE)
+write.csv(bridges_ex, "clean_bridges.csv", row.names=FALSE)
 
 
 ```
+
+
+#Get bad bridges
+
+```{r}
+
+bad <- bridges_selects %>%
+    filter(deck_cond_058 == "IMMINENT FAILURE CONDITION" | superstructure_cond_059 == "IMMINENT FAILURE CONDITION" | substructure_cond_060 == "IMMINENT FAILURE CONDITION")
+
+write.csv(bad, "bad_bridges.csv", row.names=FALSE)
+
+```
+
 
 
 
